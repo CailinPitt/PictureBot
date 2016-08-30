@@ -30,7 +30,7 @@ function classifyImage() {
       if (err)
         console.log(err);
       else
-        console.log(JSON.stringify(res, null, 2));
+        gatherImageInfo(res);
     });
   });
 }
@@ -72,4 +72,12 @@ function chooseImage() {
     imageUrl = faker.Image.transport();
 
   return imageUrl;
+}
+
+function gatherImageInfo(imageInfo) {
+  for (var i = 0; i < imageInfo.images[0].classifiers[0].classes.length; i++)
+  {
+    console.log(imageInfo.images[0].classifiers[0].classes[i].class + " ("
+      + (imageInfo.images[0].classifiers[0].classes[i].score * 100).toFixed(2) + "% sure)");
+  }
 }
