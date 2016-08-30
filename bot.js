@@ -2,6 +2,15 @@ var faker = require('Faker');
 var request = require('request');
 var fs = require('fs');
 var watson = require('watson-developer-cloud');
+var Twit = require('twit')
+
+var T = new Twit({
+  consumer_key:         process.env.PB_CONSUMER_KEY,
+  consumer_secret:      process.env.PB_CONSUMER_SECRET,
+  access_token:         process.env.PB_ACCESS_TOKEN,
+  access_token_secret:  process.env.PB_ACCESS_TOKEN_SECRET,
+});
+// Set up access to @PictureGuesser
 
 // Download random image to classify
 classifyImage();
@@ -30,7 +39,7 @@ function classifyImage() {
       if (err)
         console.log(err);
       else
-        gatherImageInfo(res);
+        tweet(gatherImageInfo(res));
     });
   });
 }
@@ -75,9 +84,38 @@ function chooseImage() {
 }
 
 function gatherImageInfo(imageInfo) {
+  var guess;
+
   for (var i = 0; i < imageInfo.images[0].classifiers[0].classes.length; i++)
   {
-    console.log(imageInfo.images[0].classifiers[0].classes[i].class + " ("
-      + (imageInfo.images[0].classifiers[0].classes[i].score * 100).toFixed(2) + "% sure)");
+    guess += imageInfo.images[0].classifiers[0].classes[i].class + " ("
+      + (imageInfo.images[0].classifiers[0].classes[i].score * 100).toFixed(2) + "% sure)" + "\n";
   }
+  // Parse JSON to get image classification and score
+
+  return guess;
+}
+
+function tweet(guess) {
+  var b64content = fs.readFileSync('./image.png', { encoding: 'base64' })
+
+  // Post media to Twitter
+  T.post('media/upload', { media_data: b64content }, function (err, data, response) {
+
+    // Assign alt-text
+    var mediaIdStr = data.media_id_string
+    var altText = "PictureBot's guess"
+    var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } }
+
+    T.post('media/metadata/create', meta_params, function (err, data, response) {
+      if (!err) {
+        // Post tweet with image and guess
+        var params = { status: guess.replace('undefined',''), media_ids: [mediaIdStr] }
+
+        T.post('statuses/update', params, function (err, data, response) {
+          console.log(data)
+        })
+      }
+    })
+  })
 }
