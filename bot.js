@@ -110,7 +110,7 @@ function tweet(guess) {
     T.post('media/metadata/create', meta_params, function (err, data, response) {
       if (!err) {
         // Post tweet with image and guess
-        var params = { status: guess.replace('undefined',''), media_ids: [mediaIdStr] }
+        var params = { status: limitChatacters(guess.replace('undefined','')), media_ids: [mediaIdStr] }
 
         T.post('statuses/update', params, function (err, data, response) {
           console.log(data)
@@ -118,4 +118,28 @@ function tweet(guess) {
       }
     })
   })
+}
+
+function limitChatacters(guess) {
+  // Make sure tweet text only has 125 characters, I'm guessing tweet w/ image
+  // can only support up to 125 characters
+
+  if (guess.length <= 125)
+  {
+    return guess;
+  }
+  else {
+    var indices = [];
+    var limit = 125;
+    // Find indexes of all '\n'
+    for (var i=0; i < guess.length;i++) {
+        if (guess[i] === "\n") indices.push(i);
+    }
+
+    var charLimit = indices.reduce(function (prev, curr) {
+      return (Math.abs(curr - limit) < Math.abs(prev - limit) ? curr : prev);
+    });
+
+    return guess.substring(0, charLimit);
+  }
 }
