@@ -10,3 +10,4 @@ Twitter bot which uses IBM Watson Developer Cloud's Visual Recognition to guess 
 
 ## TODO
 * Make sure I don't use up Watson free tier
+
